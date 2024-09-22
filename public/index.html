@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incremental Clicker Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .game-section {
+            margin: 20px;
+        }
+        .slider {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Incremental Clicker Game</h1>
+
+    <div class="game-section">
+        <p><strong>Producers:</strong> <span id="producers">1</span></p>
+        <p><strong>Profit per Click:</strong> <span id="profit">1</span></p>
+        <p><strong>Profit Time (seconds):</strong> <input type="range" id="profitTimeSlider" class="slider" min="0" max="1" step="0.01" value="1" disabled><span id="profitTime">1</span>s</p>
+        <p><strong>New Producer Fee:</strong> <span id="producerFee">4</span></p>
+        <p><strong>Manager Cost:</strong> 100 coins</p>
+    </div>
+
+    <div class="game-section">
+        <button id="clickToProfit">Click to Profit</button>
+        <p><strong>Total Profit:</strong> <span id="totalProfit">0</span></p>
+    </div>
+
+    <div class="game-section">
+        <button id="buyProducer">Buy New Producer</button>
+        <button id="buyManager">Buy Manager</button>
+    </div>
+
+    <script>
+        let producers = 1;
+        let profitPerClick = 1;
+        let profitTime = 1; // in seconds
+        let producerFee = 4; // Initial fee
+        let totalProfit = 0;
+        let isProfitActive = false; // To avoid double clicking while the slider is moving
+        let managerActive = false; // Manager status
+        let managerCost = 100; // Manager's cost
+
+        const producersElement = document.getElementById('producers');
+        const profitElement = document.getElementById('profit');
+        const profitTimeSlider = document.getElementById('profitTimeSlider');
+        const profitTimeElement = document.getElementById('profitTime');
+        const producerFeeElement = document.getElementById('producerFee');
+        const totalProfitElement = document.getElementById('totalProfit');
+
+        const clickToProfitButton = document.getElementById('clickToProfit');
+        const buyProducerButton = document.getElementById('buyProducer');
+        const buyManagerButton = document.getElementById('buyManager');
+
+        // Handle clicking for profit
+        clickToProfitButton.onclick = function() {
+            if (!isProfitActive) {
+                totalProfit += profitPerClick * producers;
+                totalProfitElement.innerText = totalProfit;
+                startProfitCountdown();
+            }
+        };
+
+        // Function to handle the countdown using the slider
+        function startProfitCountdown() {
+            isProfitActive = true;
+            let countdown = profitTime;
+
+            const countdownInterval = setInterval(() => {
+                countdown -= 0.01; // Decrease the countdown
+                profitTimeSlider.value = countdown / profitTime; // Update the slider value (1 to 0)
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    profitTimeSlider.value = 1; // Reset slider to full
+                    isProfitActive = false; // Allow clicking again
+                }
+            }, 10); // Update every 10 milliseconds for a smooth slider movement
+        }
+
+        // Handle buying a new producer
+        buyProducerButton.onclick = function() {
+            if (totalProfit >= producerFee) {
+                producers++;
+                totalProfit -= producerFee;
+                producerFee = getNextProducerFee(producerFee); // Update fee to next progression value
+                profitPerClick++; // Increase profit per click by 1 with each new producer
+
+                producersElement.innerText = producers;
+                totalProfitElement.innerText = totalProfit;
+                producerFeeElement.innerText = producerFee.toFixed(2); // Show 2 decimal places for the fee
+                profitElement.innerText = profitPerClick;
+            } else {
+                alert("Not enough profit to buy a new producer!");
+            }
+        };
+
+        // Function to calculate the next producer fee based on a progression
+        function getNextProducerFee(currentFee) {
+            return currentFee * 1.07; // Increase fee by 7% (i.e., 4.28, 4.58, 4.90...)
+        }
+
+        // Function to activate the manager
+        buyManagerButton.onclick = function() {
+            if (!managerActive && totalProfit >= managerCost) {
+                totalProfit -= managerCost;
+                totalProfitElement.innerText = totalProfit;
+                managerActive = true;
+                buyManagerButton.disabled = true; // Disable the manager button after purchase
+                startManagerAutomation();
+            } else if (managerActive) {
+                alert("Manager already purchased!");
+            } else {
+                alert("Not enough profit to buy the manager!");
+            }
+        };
+
+        // Manager automation: auto-click the profit button every 1 second
+        function startManagerAutomation() {
+            setInterval(() => {
+                if (managerActive) {
+                    clickToProfitButton.click(); // Simulate the click on "clickToProfit"
+                }
+            }, 1000); // Manager clicks every 1 second
+        }
+
+        // Function to update profit time
+        function updateProfitTime(newTime) {
+            profitTime = newTime;
+            profitTimeElement.innerText = profitTime;
+        }
+
+        // Example of dynamically changing profit time, if needed
+        updateProfitTime(1); // Set default profit time to 1 second
+
+    </script>
+</body>
+</html>
